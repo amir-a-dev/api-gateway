@@ -1,2 +1,21 @@
+# Binaries
+/demo
+/cmd/demo/demo
+*.exe
+
+# Logs
 *.log
-.env
+
+# Test artifacts
+*.out
+*.test
+coverage.html
+coverage.out
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

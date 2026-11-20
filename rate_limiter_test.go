@@ -66,7 +66,7 @@ func TestAllow_Refill(t *testing.T) {
 	}
 
 	// Pretend 1 second has elapsed since the last refill.
-	b := rl.getBuket("k")
+	b := rl.getBucket("k")
 	b.mu.Lock()
 	b.lastRefill = b.lastRefill.Add(-1 * time.Second)
 	b.mu.Unlock()
@@ -88,7 +88,7 @@ func TestAllow_CapsAtCapacity(t *testing.T) {
 
 	rl := NewRateLimiter(2, 100)
 
-	b := rl.getBuket("k")
+	b := rl.getBucket("k")
 	b.mu.Lock()
 	b.lastRefill = b.lastRefill.Add(-1 * time.Hour) // huge refill would be 360k tokens
 	b.mu.Unlock()
@@ -119,7 +119,7 @@ func TestAllow_BucketAgeDoesNotBypassLimit(t *testing.T) {
 	}
 
 	// Age it 10 seconds.
-	b := rl.getBuket("k")
+	b := rl.getBucket("k")
 	b.mu.Lock()
 	b.lastRefill = b.lastRefill.Add(-10 * time.Second)
 	b.mu.Unlock()
@@ -138,15 +138,15 @@ func TestAllow_BucketAgeDoesNotBypassLimit(t *testing.T) {
 }
 
 // ---------------------------------------------------------------
-// getBuket()
+// getBucket()
 // ---------------------------------------------------------------
 
 func TestGetBucket_SameKeyReturnsSameBucket(t *testing.T) {
 	t.Parallel()
 
 	rl := NewRateLimiter(5, 1)
-	b1 := rl.getBuket("k")
-	b2 := rl.getBuket("k")
+	b1 := rl.getBucket("k")
+	b2 := rl.getBucket("k")
 	if b1 != b2 {
 		t.Fatal("same key should return identical bucket pointer")
 	}
@@ -156,7 +156,7 @@ func TestGetBucket_DifferentKeysReturnDifferentBuckets(t *testing.T) {
 	t.Parallel()
 
 	rl := NewRateLimiter(5, 1)
-	if rl.getBuket("a") == rl.getBuket("b") {
+	if rl.getBucket("a") == rl.getBucket("b") {
 		t.Fatal("different keys should have different buckets")
 	}
 }
@@ -169,13 +169,13 @@ func TestGetBucket_ConcurrentCreatesOneBucket(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 100 {
 		wg.Go(func() {
-			rl.getBuket("shared")
+			rl.getBucket("shared")
 		})
 	}
 	wg.Wait()
 
 	rl.mu.RLock()
-	n := len(rl.tokenBukets)
+	n := len(rl.tokenBuckets)
 	rl.mu.RUnlock()
 	if n != 1 {
 		t.Fatalf("expected 1 bucket for shared key, got %d", n)

@@ -80,10 +80,10 @@ func TestNew_RootHandler(t *testing.T) {
 }
 
 // ---------------------------------------------------------------
-// AddServer()
+// AddRoute()
 // ---------------------------------------------------------------
 
-func TestAddServer_Validation(t *testing.T) {
+func TestAddRoute_Validation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -104,31 +104,31 @@ func TestAddServer_Validation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := New()
-			err := g.AddServer(tt.dest, tt.path)
+			err := g.AddRoute(tt.dest, tt.path)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddServer(%q, %q) err = %v; wantErr %v", tt.dest, tt.path, err, tt.wantErr)
+				t.Errorf("AddRoute(%q, %q) err = %v; wantErr %v", tt.dest, tt.path, err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestAddServer_DuplicateRoute(t *testing.T) {
+func TestAddRoute_DuplicateRoutee(t *testing.T) {
 	t.Parallel()
 	g := New()
 
-	if err := g.AddServer("http://example.com", "/api/"); err != nil {
-		t.Fatalf("first AddServer: %v", err)
+	if err := g.AddRoute("http://example.com", "/api/"); err != nil {
+		t.Fatalf("first AddRoute: %v", err)
 	}
-	err := g.AddServer("http://example.com", "/api/")
+	err := g.AddRoute("http://example.com", "/api/")
 	if err == nil {
-		t.Fatal("duplicate AddServer should return error")
+		t.Fatal("duplicate AddRoute should return error")
 	}
 	if !strings.Contains(err.Error(), "already registered") {
 		t.Errorf("err = %q; want it to mention 'already registered'", err)
 	}
 }
 
-func TestAddServer_ProxiesToBackend(t *testing.T) {
+func TestAddRoute_ProxiesToBackend(t *testing.T) {
 	t.Parallel()
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -139,8 +139,8 @@ func TestAddServer_ProxiesToBackend(t *testing.T) {
 	defer backend.Close()
 
 	g := New()
-	if err := g.AddServer(backend.URL, "/api/"); err != nil {
-		t.Fatalf("AddServer: %v", err)
+	if err := g.AddRoute(backend.URL, "/api/"); err != nil {
+		t.Fatalf("AddRoute: %v", err)
 	}
 
 	rec := httptest.NewRecorder()
@@ -157,7 +157,7 @@ func TestAddServer_ProxiesToBackend(t *testing.T) {
 	}
 }
 
-func TestAddServer_MultiplePrefixesRouteIndependently(t *testing.T) {
+func TestAddRoute_MultiplePrefixesRouteeIndependently(t *testing.T) {
 	t.Parallel()
 
 	backendA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -171,10 +171,10 @@ func TestAddServer_MultiplePrefixesRouteIndependently(t *testing.T) {
 	defer backendB.Close()
 
 	g := New()
-	if err := g.AddServer(backendA.URL, "/api/"); err != nil {
+	if err := g.AddRoute(backendA.URL, "/api/"); err != nil {
 		t.Fatal(err)
 	}
-	if err := g.AddServer(backendB.URL, "/db/"); err != nil {
+	if err := g.AddRoute(backendB.URL, "/db/"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -202,14 +202,14 @@ func TestAddServer_MultiplePrefixesRouteIndependently(t *testing.T) {
 	}
 }
 
-// TestAddServer_RootPathCollision documents current behavior:
+// TestAddRoute_RootPathCollision documents current behavior:
 // New() pre-registers "/" via HandleFunc, but does NOT record it in g.paths,
-// so AddServer("...", "/") bypasses the duplicate check and hits
+// so AddRoute("...", "/") bypasses the duplicate check and hits
 // http.ServeMux's "multiple registrations" panic.
 //
-// Fix: either reject "/" in AddServer with a clear error, or initialize
+// Fix: either reject "/" in AddRoute with a clear error, or initialize
 // g.paths["/"] = true in New().
-func TestAddServer_RootPathCollision(t *testing.T) {
+func TestAddRoute_RootPathCollision(t *testing.T) {
 	t.Skip("known issue — see docstring")
 
 	g := New()
@@ -218,7 +218,7 @@ func TestAddServer_RootPathCollision(t *testing.T) {
 			t.Fatal("expected panic registering root path")
 		}
 	}()
-	_ = g.AddServer("http://example.com", "/")
+	_ = g.AddRoute("http://example.com", "/")
 }
 
 // ---------------------------------------------------------------
